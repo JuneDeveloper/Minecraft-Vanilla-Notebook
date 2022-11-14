@@ -42,9 +42,12 @@ import java.nio.file.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.jwg.coord_book.CoordBook.pageLocation;
 
 @Environment(EnvType.CLIENT)
 public class selectionScreen extends Screen {
@@ -94,7 +97,7 @@ public class selectionScreen extends Screen {
         this.doneButton = (ButtonWidget)this.addDrawableChild(new ButtonWidget(this.width / 2 + 4, this.height - 48, 150, 20, ScreenTexts.DONE, (button) -> {
             this.close();
         }));
-        this.addDrawableChild(new ButtonWidget(this.width / 2 - 154, this.height - 48, 150, 20, Text.translatable("pack.openFolder"), (button) -> {
+        this.addDrawableChild(new ButtonWidget(this.width / 2 - 154, this.height - 48, 150, 20, Text.translatable("coordbook.openfolder"), (button) -> {
             Util.getOperatingSystem().open(this.file);
         }, new ButtonWidget.TooltipSupplier() {
             public void onTooltip(ButtonWidget buttonWidget, MatrixStack matrixStack, int i, int j) {
@@ -141,8 +144,9 @@ public class selectionScreen extends Screen {
     private void updatePackList(PackListWidget widget, Stream<ResourcePackOrganizer.Pack> packs) {
         widget.children().clear();
         packs.forEach((pack) -> {
-            widget.children().add(new PackListWidget.ResourcePackEntry(this.client, widget, this, pack));
+            widget.children().add(new PackListWidget.ResourcePackEntry(Objects.requireNonNull(this.client), widget, this, pack));
         });
+
     }
 
     private void refresh() {
@@ -161,54 +165,10 @@ public class selectionScreen extends Screen {
         super.render(matrices, mouseX, mouseY, delta);
     }
 
-    protected static void copyPacks(MinecraftClient client, List<Path> srcPaths, Path destPath) {
-        MutableBoolean mutableBoolean = new MutableBoolean();
-        srcPaths.forEach((src) -> {
-            try {
-                Stream<Path> stream = Files.walk(src);
-
-                try {
-                    stream.forEach((toCopy) -> {
-                        try {
-                            Util.relativeCopy(src.getParent(), destPath, toCopy);
-                        } catch (IOException var5) {
-                            LOGGER.warn("Failed to copy datapack file  from {} to {}", new Object[]{toCopy, destPath, var5});
-                            mutableBoolean.setTrue();
-                        }
-
-                    });
-                } catch (Throwable var7) {
-                    if (stream != null) {
-                        try {
-                            stream.close();
-                        } catch (Throwable var6) {
-                            var7.addSuppressed(var6);
-                        }
-                    }
-
-                    throw var7;
-                }
-
-                if (stream != null) {
-                    stream.close();
-                }
-            } catch (IOException var8) {
-                LOGGER.warn("Failed to copy datapack file from {} to {}", src, destPath);
-                mutableBoolean.setTrue();
-            }
-
-        });
-        if (mutableBoolean.isTrue()) {
-            SystemToast.addPackCopyFailure(client, destPath.toString());
-        }
-
-    }
-
     public void filesDragged(List<Path> paths) {
         String string = (String)paths.stream().map(Path::getFileName).map(Path::toString).collect(Collectors.joining(", "));
         this.client.setScreen(new ConfirmScreen((confirmed) -> {
             if (confirmed) {
-                copyPacks(this.client, paths, this.file.toPath());
                 this.refresh();
             }
 
@@ -217,6 +177,8 @@ public class selectionScreen extends Screen {
     }
 
     private Identifier loadPackIcon(TextureManager textureManager, ResourcePackProfile resourcePackProfile) {
+        //Loop through folders
+        ;
         try {
             ResourcePack resourcePack = resourcePackProfile.createResourcePack();
 
@@ -322,7 +284,7 @@ public class selectionScreen extends Screen {
 
                     while(var3.hasNext()) {
                         Path path = (Path)var3.next();
-                        if (Files.isDirectory(path, new LinkOption[]{LinkOption.NOFOLLOW_LINKS})) {
+                        if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
                             this.watchDirectory(path);
                         }
                     }
@@ -338,9 +300,7 @@ public class selectionScreen extends Screen {
                     throw var6;
                 }
 
-                if (directoryStream != null) {
-                    directoryStream.close();
-                }
+                directoryStream.close();
 
             } catch (Exception var7) {
                 this.watchService.close();

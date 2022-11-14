@@ -2,10 +2,13 @@ package com.jwg.coord_book.screens;
 
 import com.jwg.coord_book.CoordBook;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.pack.PackScreen;
+import net.minecraft.client.gui.screen.world.CreateWorldScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PageTurnWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
@@ -13,12 +16,14 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.NarratorManager;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.resource.*;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 
@@ -26,6 +31,8 @@ import static com.jwg.coord_book.CoordBook.*;
 
 @Environment(EnvType.CLIENT)
 public class menuScreen extends Screen {
+    private ResourcePackManager packManager;
+    protected DataPackSettings dataPackSettings;
     public static int page = 0;
     public static int bookmarkedpage = 0;
     public static int pageLimit = -1;
@@ -87,6 +94,13 @@ public class menuScreen extends Screen {
             fileOverwriter.close();
         } catch (IOException e) { e.printStackTrace(); }
     }
+    private void openSelectionScreen() {
+        Pair<File, ResourcePackManager> pair = getScannedPack();
+        if (pair != null) {
+            assert this.client != null;
+            this.client.setScreen(new PackScreen(this, (ResourcePackManager)pair.getSecond(), null, (File)pair.getFirst(), Text.translatable("dataPack.title")));
+        }
+    }
     protected void addButtons() {
         //Done button
         this.addDrawableChild(new ButtonWidget(this.width / 2 - 100, 196, 200, 20, ScreenTexts.DONE, (button) -> { assert this.client != null; this.client.setScreen(null); }));
@@ -95,7 +109,8 @@ public class menuScreen extends Screen {
         this.addDrawableChild(new TexturedButtonWidget(this.width/2 +86, 20, 17, 17, 0, 0, 17, DELETE_ICON, 17, 34, (button) -> removePage(page), Text.translatable("jwg.button.close")));
         //Bookmark button
         this.addDrawableChild(new TexturedButtonWidget(this.width/2 +86, 38, 17, 17, 0, 0, 17, BOOKMARK_ICON, 17, 34, (button) -> page = bookmarkedpage, Text.translatable("jwg.button.bookmark")));
-
+        //Temp button
+        this.addDrawableChild(new TexturedButtonWidget(this.width/2 +86, 38+18, 17, 17, 0, 0, 17, BOOKMARK_ICON, 17, 34, (button) -> openSelectionScreen(), Text.translatable("jwg.button.bookmark")));
         //Bookmark button
         this.addDrawableChild(new TexturedButtonWidget(this.width/2-60, 9, 20, 20, 0, 0, 20, BOOKMARK_MARKER_ICON, 32, 64, (icon) -> { bookmarkedpage = page; writeBookmark(); }, Text.translatable("jwg.button.bookmark-marker")));
         //Go to bookmark page button
@@ -385,4 +400,20 @@ public class menuScreen extends Screen {
         return null;
     }
 
+
+
+
+
+    @Nullable
+    private Pair<File, ResourcePackManager> getScannedPack() {
+        Path path = Path.of(pageLocation);
+        File file = path.toFile();
+        if (this.packManager == null) {
+            this.packManager = new ResourcePackManager(ResourceType.SERVER_DATA, new VanillaDataPackProvider(), new FileResourcePackProvider(file, ResourcePackSource.PACK_SOURCE_NONE));
+            this.packManager.scanPacks();
+        }
+
+        //this.packManager.setEnabledProfiles(this.dataPackSettings.getEnabled());
+        return Pair.of(file, this.packManager);
+    }
 }

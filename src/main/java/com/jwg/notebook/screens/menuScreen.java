@@ -54,7 +54,6 @@ public class menuScreen extends Screen {
     public static TexturedButtonWidget delete;
     public static TexturedButtonWidget bookmark;
     public static TexturedButtonWidget bookmarkPgB;
-    public static TexturedButtonWidget globalb;
     public menuScreen() {
         this(true);
     }
@@ -88,12 +87,6 @@ public class menuScreen extends Screen {
         this.addDrawableChild(bookmark = sidebar.addSidebarButton(1, BOOKMARK_MARKER_ICON, this, "bookmark", 8, 8, (button -> com.jwg.notebook.gui.button.gotobookmark.onPress())));
         this.addDrawableChild(bookmarkPgB = sidebar.addSidebarButton(2, BOOKMARK_ICON, this, "bookmarkb", 8, 8, (button -> com.jwg.notebook.gui.button.bookmark.onPress())));
 
-        this.addDrawableChild(globalb = sidebar.addSidebarButton(11, GLOBAL_ICON, this, "global", 8, 8, (button -> {
-            assert this.client != null;
-            if (this.client.world != null) {
-                com.jwg.notebook.gui.button.global.onPress(this.client.world);
-            }
-        })));
         assert this.client != null;
 
         //Page buttons (arrows)
@@ -190,21 +183,15 @@ public class menuScreen extends Screen {
         RenderSystem.setShaderTexture(0, BOOK_SIDEBAR_TEXTURE);
 
         if (delete.isHovered()) {
-            drawStringWithShadow(matrices, this.textRenderer, "Delete Page", this.width/2 +115, 7+12, 16777215);
+            drawTextWithShadow(matrices, this.textRenderer, Text.translatable("tooltip.book.delete"), this.width/2 +115, 7+12, 16777215);
         }
         else if (bookmark.isHovered()) {
-            drawStringWithShadow(matrices, this.textRenderer, "Bookmark Page", this.width/2 +115, 7+(12*2), 16777215);
+            drawTextWithShadow(matrices, this.textRenderer, Text.translatable("tooltip.book.bookmark"), this.width/2 +115, 7+(12*2), 16777215);
         }
         else if (bookmarkPgB.isHovered()) {
-            drawStringWithShadow(matrices, this.textRenderer, "Go To Bookmark", this.width/2 +115, 7+(12*3), 16777215);
+            drawTextWithShadow(matrices, this.textRenderer, Text.translatable("tooltip.book.bookmarkb"), this.width/2 +115, 7+(12*3), 16777215);
         }
-        else if (globalb.isHovered()) {
-            String enabled = "Disabled";
-            if (global) {
-                enabled = "Enabled";
-            }
-            drawStringWithShadow(matrices, this.textRenderer, "Global mode ("+enabled+")", this.width/2 +115, 7+(12*12), 16777215);
-        }
+
 
     }
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {

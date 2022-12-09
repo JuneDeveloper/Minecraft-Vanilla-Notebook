@@ -1,4 +1,8 @@
 {
   "category.notebook.keys": "Vanilla Notebook",
-  "key.notebook.open": "Open Book"
+  "key.notebook.open": "Open Book",
+
+  "tooltip.book.bookmark": "Bookmark Page",
+  "tooltip.book.delete": "Delete Page",
+  "tooltip.book.bookmarkb": "Go To Bookmark"
 }
